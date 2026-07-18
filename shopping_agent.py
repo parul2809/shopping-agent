@@ -14,6 +14,14 @@ from reviews_api import get_product_rating
 
 load_dotenv()
 
+# Support both .env (local) and Streamlit secrets (cloud)
+try:
+    import streamlit as st
+    if "GROQ_API_KEY" in st.secrets:
+        os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+except Exception:
+    pass
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "store.db")
 
 llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)

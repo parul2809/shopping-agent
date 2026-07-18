@@ -1,4 +1,7 @@
-langchain
-langgraph
-langchain-groq
-python-dotenv
+langchain==0.3.30
+langchain-core==0.3.86
+langchain-groq==0.3.8
+langgraph==0.6.11
+langgraph-prebuilt==0.6.5
+python-dotenv==1.2.1
+streamlit==1.50.0

@@ -3,6 +3,12 @@ import tempfile
 
 import streamlit as st
 
+from setup_db import create_database, DB_PATH
+
+# Ensure DB exists (needed on first deploy to Streamlit Cloud)
+if not os.path.exists(DB_PATH):
+    create_database()
+
 from shopping_agent import agent
 
 # ---------------------------------------------------------------------------

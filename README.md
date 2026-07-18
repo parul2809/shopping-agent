@@ -85,6 +85,29 @@ shopping-agent/
 - "Find me the best rated nuts"
 - Upload a product image to find similar items
 
+## Deploy to Streamlit Community Cloud
+
+1. **Push to GitHub** (make sure `.env` is NOT committed):
+   ```bash
+   git add .
+   git commit -m "Prepare for Streamlit Cloud deployment"
+   git push -u origin main
+   ```
+
+2. **Go to** [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
+
+3. **Click "New app"** and select:
+   - Repository: `YOUR_USERNAME/shopping-agent`
+   - Branch: `main`
+   - Main file path: `app.py`
+
+4. **Add your secret** — In the app's settings, go to **Secrets** and add:
+   ```toml
+   GROQ_API_KEY = "gsk_your_key_here"
+   ```
+
+5. **Deploy** — Click "Deploy" and your app will be live at `https://your-app-name.streamlit.app`
+
 ## License
 
 MIT
