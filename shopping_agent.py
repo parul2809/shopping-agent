@@ -17,7 +17,7 @@ load_dotenv()
 DB_PATH = os.path.join(os.path.dirname(__file__), "store.db")
 
 llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)
-vision_llm = ChatGroq(model="meta-llama/llama-4-scout-17b-16e-instruct", temperature=0)
+vision_llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0)
 
 
 # ---------------------------------------------------------------------------
@@ -115,8 +115,11 @@ def describe_product_image(image_path: str) -> str:
     Use this when the user uploads a photo of a product they are interested in.
     The returned attributes can be used directly with search_products.
     """
-    with open(image_path, "rb") as f:
-        image_data = base64.b64encode(f.read()).decode()
+    try:
+        with open(image_path, "rb") as f:
+            image_data = base64.b64encode(f.read()).decode()
+    except FileNotFoundError:
+        return f"Error: Image file not found at path: {image_path}"
 
     ext = os.path.splitext(image_path)[1].lower().lstrip(".")
     mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext}"
@@ -139,8 +142,11 @@ def describe_product_image(image_path: str) -> str:
         },
     ])
 
-    response = vision_llm.invoke([message])
-    return response.content
+    try:
+        response = vision_llm.invoke([message])
+        return response.content
+    except Exception as e:
+        return f"Error analyzing image: {str(e)}"
 
 
 # ---------------------------------------------------------------------------
