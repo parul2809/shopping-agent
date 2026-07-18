@@ -16,7 +16,7 @@ load_dotenv()
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "store.db")
 
-llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
+llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)
 vision_llm = ChatGroq(model="meta-llama/llama-4-scout-17b-16e-instruct", temperature=0)
 
 
@@ -116,7 +116,7 @@ def describe_product_image(image_path: str) -> str:
     The returned attributes can be used directly with search_products.
     """
     with open(image_path, "rb") as f:
-        image_data = base64.b64.encode(f.read()).decode()
+        image_data = base64.b64encode(f.read()).decode()
 
     ext = os.path.splitext(image_path)[1].lower().lstrip(".")
     mime = "image/jpeg" if ext in ("jpg", "jpeg") else f"image/{ext}"
