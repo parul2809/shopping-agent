@@ -21,7 +21,7 @@ An AI-powered shopping assistant built with LangGraph and Groq. It searches prod
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/shopping-agent.git
+git clone https://github.com/parul2809/shopping-agent.git
 cd shopping-agent
 ```
 
