@@ -50,18 +50,18 @@ def get_ratings_for_products(product_ids: list[int]) -> list[dict]:
             "average_rating": ratings_map.get(pid, {}).get("average_rating", 0.0),
             "review_count": ratings_map.get(pid, {}).get("review_count", 0),
         }
-        for pid in product_ids  
+        for pid in product_ids
     ]
 
 
-    if __name__ == "__main__":
-        # Single product
-        result = get_product_rating(1)
-        print("Single product rating:")
-        print(f"   Product {result['product_id']}: {result['average_rating']} stars ({result['review_count']} reviews)")
+if __name__ == "__main__":
+    # Single product
+    result = get_product_rating(1)
+    print("Single product rating:")
+    print(f"   Product {result['product_id']}: {result['average_rating']} stars ({result['review_count']} reviews)")
 
-        # Multiple products 
-        print("\nBatch ratings:")
-        results = get_ratings_for_products([1, 3, 5, 7])
-        for r in results:
-            print(f"  Product {r['product_id']}: {r['average_rating']} stars ({r['review_count']} reviews)")
+    # Multiple products
+    print("\nBatch ratings:")
+    results = get_ratings_for_products([1, 3, 5, 7])
+    for r in results:
+        print(f"  Product {r['product_id']}: {r['average_rating']} stars ({r['review_count']} reviews)")

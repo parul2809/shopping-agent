@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Shopping Agent — Architecture</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
+    --line: #475569;
+    --ui: #38bdf8;
+    --agent: #a78bfa;
+    --tool: #34d399;
+    --data: #fbbf24;
+    --ext: #fb7185;
+    --card-shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 700px at 20% -10%, #17233b 0%, var(--bg) 60%);
+    color: var(--ink);
+    font: 14px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+    padding: 32px 20px 60px;
+  }
+  header { max-width: 1100px; margin: 0 auto 28px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  header p { color: var(--muted); margin: 0; }
+
+  .diagram {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  .layer {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px 22px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+  }
+  .layer-title {
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.ui { background: var(--ui); }
+  .dot.agent { background: var(--agent); }
+  .dot.tool { background: var(--tool); }
+  .dot.data { background: var(--data); }
+  .dot.ext { background: var(--ext); }
+
+  .row { display: flex; flex-wrap: wrap; gap: 14px; }
+
+  .card {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    min-width: 180px;
+    flex: 1;
+  }
+  .card h3 { margin: 0 0 4px; font-size: 15px; }
+  .card .file { font-size: 11px; color: var(--muted); font-family: "Cascadia Code", Consolas, monospace; }
+  .card p { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; }
+
+  .tool-card { border-left: 3px solid var(--tool); }
+  .tool-card h3 { color: var(--tool); font-family: "Cascadia Code", Consolas, monospace; font-size: 13.5px; }
+  .ui .card { border-left: 3px solid var(--ui); }
+  .agent-card { border-left: 3px solid var(--agent); }
+  .data-card { border-left: 3px solid var(--data); }
+  .ext-card { border-left: 3px solid var(--ext); }
+
+  .arrow {
+    text-align: center;
+    color: var(--muted);
+    font-size: 22px;
+    line-height: 1;
+    margin: -14px 0;
+    position: relative;
+    z-index: 2;
+  }
+  .arrow small {
+    display: block;
+    font-size: 11px;
+    letter-spacing: .04em;
+    margin-top: 2px;
+  }
+
+  .split { display: flex; gap: 26px; flex-wrap: wrap; }
+  .split > .layer { flex: 1; min-width: 300px; }
+
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(148,163,184,.15);
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  .legend {
+    max-width: 1100px;
+    margin: 30px auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+
+  .note {
+    max-width: 1100px;
+    margin: 22px auto 0;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px dashed var(--line);
+    padding-top: 14px;
+  }
+  code { color: #cbd5e1; font-family: "Cascadia Code", Consolas, monospace; }
+
+  /* ReAct loop flowchart */
+  .flow-section { max-width: 1100px; margin: 46px auto 0; }
+  .flow-section h2 { font-size: 20px; margin: 0 0 4px; }
+  .flow-section .sub { color: var(--muted); margin: 0 0 22px; font-size: 13px; }
+  .flow {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 20px;
+    box-shadow: var(--card-shadow);
+  }
+  .step {
+    flex: 1;
+    min-width: 150px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 14px 16px;
+    text-align: center;
+  }
+  .step .icon { font-size: 22px; }
+  .step h4 { margin: 8px 0 4px; font-size: 14px; }
+  .step p { margin: 0; font-size: 12px; color: var(--muted); }
+  .step.think { border-top: 3px solid var(--agent); }
+  .step.act { border-top: 3px solid var(--tool); }
+  .step.look { border-top: 3px solid var(--data); }
+  .step.answer { border-top: 3px solid var(--ui); }
+  .flow-arrow {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 24px; padding: 0 6px; min-width: 34px;
+  }
+  .loop-note {
+    max-width: 1100px; margin: 14px auto 0;
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 12.5px;
+  }
+  .loop-note .pill {
+    border: 1px dashed var(--tool); color: var(--tool);
+    border-radius: 999px; padding: 3px 12px; font-size: 12px;
+  }
+  .example {
+    max-width: 1100px; margin: 22px auto 0;
+    background: #0b1220; border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .example h3 { margin: 0 0 12px; font-size: 14px; color: var(--ink); }
+  .example ol { margin: 0; padding-left: 20px; }
+  .example li { margin: 6px 0; font-size: 13px; }
+  .example .tool { color: var(--tool); font-family: "Cascadia Code", Consolas, monospace; }
+  .example .data { color: var(--data); }
+  @media (max-width: 720px) {
+    .flow { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); padding: 8px 0; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🛒 AI Shopping Agent — Architecture</h1>
+    <p>Streamlit UI → LangGraph ReAct agent → tools → SQLite &amp; Groq LLMs. Data flow is top to bottom.</p>
+  </header>
+
+  <div class="diagram">
+
+    <!-- USER + UI -->
+    <div class="layer ui">
+      <p class="layer-title"><span class="dot ui"></span> Presentation Layer</p>
+      <div class="row">
+        <div class="card">
+          <h3>Shopper (Browser)</h3>
+          <span class="file">chat &amp; image upload</span>
+          <p>Types requests ("i want coffee"), uploads product photos, confirms orders.</p>
+        </div>
+        <div class="card">
+          <h3>Streamlit App</h3>
+          <span class="file">app.py</span>
+          <p>Chat UI + image uploader. Holds <code>st.session_state.messages</code> and a per-session
+             <code>session_id</code> (uuid). Calls <code>set_session_id()</code> then <code>agent.invoke()</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">▼<small>messages + session_id</small></div>
+
+    <!-- AGENT -->
+    <div class="layer">
+      <p class="layer-title"><span class="dot agent"></span> Agent Layer</p>
+      <div class="row">
+        <div class="card agent-card">
+          <h3>LangGraph ReAct Agent</h3>
+          <span class="file">shopping_agent.py · create_react_agent()</span>
+          <p>System prompt defines flows: Image Search, Browsing, Browsing by Category,
+             Ordering, Order History. Reasons over the conversation and decides which tool to call.
+             <span class="badge">recursion_limit = 50</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">▼<small>tool calls</small></div>
+
+    <!-- TOOLS -->
+    <div class="layer">
+      <p class="layer-title"><span class="dot tool"></span> Tool Layer <span class="badge">@tool</span></p>
+      <div class="row">
+        <div class="card tool-card">
+          <h3>search_products()</h3>
+          <p>Keyword search over name/description/category. Ratings attached, sorted best-first.</p>
+        </div>
+        <div class="card tool-card">
+          <h3>list_categories()</h3>
+          <p>All categories with product counts.</p>
+        </div>
+        <div class="card tool-card">
+          <h3>list_products_by_category()</h3>
+          <p>Every product in a category, ratings attached, best-first.</p>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <div class="card tool-card">
+          <h3>top_rated_by_category()</h3>
+          <p>Highest-rated product per category (tie-break by reviews).</p>
+        </div>
+        <div class="card tool-card">
+          <h3>get_rating()</h3>
+          <p>Single product's average rating &amp; review count.</p>
+        </div>
+        <div class="card tool-card">
+          <h3>checkout()</h3>
+          <p>Writes an order (with <code>session_id</code>) to the DB, returns confirmation.</p>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <div class="card tool-card">
+          <h3>get_orders()</h3>
+          <p>Returns orders for the current <code>session_id</code> only, with total.</p>
+        </div>
+        <div class="card tool-card">
+          <h3>describe_product_image()</h3>
+          <p>Sends uploaded image to vision LLM, extracts search keywords &amp; organic flag.</p>
+        </div>
+        <div class="card" style="background:transparent;border:1px dashed var(--line);">
+          <h3 style="color:var(--muted)">Session context</h3>
+          <p><code>contextvars</code> holds the active <code>session_id</code> so tools scope
+             orders without the LLM passing it.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">▼<small>SQL queries / API calls</small></div>
+
+    <!-- DATA + EXTERNAL -->
+    <div class="split">
+      <div class="layer">
+        <p class="layer-title"><span class="dot data"></span> Data Layer</p>
+        <div class="row" style="flex-direction:column;">
+          <div class="card data-card">
+            <h3>reviews_api.py</h3>
+            <span class="file">get_product_rating() · get_ratings_for_products()</span>
+            <p>Aggregates ratings from the reviews table (AVG, COUNT).</p>
+          </div>
+          <div class="card data-card">
+            <h3>SQLite — store.db</h3>
+            <span class="file">setup_db.py builds &amp; migrates schema</span>
+            <p>Tables: <code>products</code>, <code>reviews</code>,
+               <code>orders</code> (with <code>session_id</code> column).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <p class="layer-title"><span class="dot ext"></span> External Services</p>
+        <div class="row" style="flex-direction:column;">
+          <div class="card ext-card">
+            <h3>Groq — Chat LLM</h3>
+            <span class="file">openai/gpt-oss-20b</span>
+            <p>Drives the ReAct agent's reasoning and tool selection.</p>
+          </div>
+          <div class="card ext-card">
+            <h3>Groq — Vision LLM</h3>
+            <span class="file">qwen/qwen3.6-27b</span>
+            <p>Analyzes uploaded product images into searchable attributes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ReAct think/act loop -->
+  <div class="flow-section">
+    <h2>How the agent answers — the ReAct loop</h2>
+    <p class="sub">The AI alternates between <em>thinking</em> and <em>acting</em>, checking each result before
+       deciding its next move. It repeats until it has enough to reply.</p>
+
+    <div class="flow">
+      <div class="step think">
+        <div class="icon">💬</div>
+        <h4>1. Understand</h4>
+        <p>Read your message and figure out your intent (browse? order? photo? order history?).</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="step think">
+        <div class="icon">🧠</div>
+        <h4>2. Think &amp; choose a tool</h4>
+        <p>Guided by its instruction sheet, decide which tool (drawer) to open — or that no tool is needed.</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="step act">
+        <div class="icon">🔧</div>
+        <h4>3. Act</h4>
+        <p>Call the tool (e.g. <code>search_products</code>), which runs a real query on the database.</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="step look">
+        <div class="icon">👀</div>
+        <h4>4. Look at result</h4>
+        <p>Read the real data returned. Enough to answer? If not, loop back and use another tool.</p>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="step answer">
+        <div class="icon">✅</div>
+        <h4>5. Answer</h4>
+        <p>Write the friendly reply from real facts — never guessed.</p>
+      </div>
+    </div>
+
+    <div class="loop-note">
+      <span class="pill">↺ repeat</span>
+      <span>Steps 2–4 loop as many times as needed (LangGraph allows up to 50) before step 5.</span>
+    </div>
+
+    <div class="example">
+      <h3>Example — you type: "i want coffee"</h3>
+      <ol>
+        <li><strong>Understand:</strong> this is a product request, not an order.</li>
+        <li><strong>Think:</strong> "describes a product → use search."</li>
+        <li><strong>Act:</strong> <span class="tool">search_products(query="coffee")</span></li>
+        <li><strong>Result:</strong> <span class="data">[Organic Ethiopian Coffee $16.99 ★4.75, Dark Roast Espresso $14.49 ★4.0]</span> — enough to answer.</li>
+        <li><strong>Answer:</strong> formats the numbered list and asks if you'd like to order.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot ui"></span> Presentation</span>
+    <span><span class="dot agent"></span> Agent</span>
+    <span><span class="dot tool"></span> Tools</span>
+    <span><span class="dot data"></span> Data</span>
+    <span><span class="dot ext"></span> External (Groq API)</span>
+  </div>
+
+  <div class="note">
+    <strong>Typical flow.</strong> A shopper message goes from <code>app.py</code> to the LangGraph agent, which
+    calls one or more tools. Product/rating tools read <code>store.db</code> (via <code>reviews_api.py</code>
+    for aggregation); <code>describe_product_image</code> calls the Groq vision model; <code>checkout</code> and
+    <code>get_orders</code> read/write the <code>orders</code> table scoped to the session. The agent's final
+    reply is rendered back in the chat.
+  </div>
+</body>
+</html>

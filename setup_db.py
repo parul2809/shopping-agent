@@ -33,6 +33,7 @@ def create_database():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT,
             product_id INTEGER NOT NULL,
             product_name TEXT NOT NULL,
             price REAL NOT NULL,
@@ -40,6 +41,12 @@ def create_database():
             FOREIGN KEY (product_id) REFERENCES products(id)
         )
     """)
+
+    # Migrate older databases that predate the session_id column.
+    cursor.execute("PRAGMA table_info(orders)")
+    order_columns = {row[1] for row in cursor.fetchall()}
+    if "session_id" not in order_columns:
+        cursor.execute("ALTER TABLE orders ADD COLUMN session_id TEXT")
 
     products = [
         # --- Honey (8) ---
